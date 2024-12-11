@@ -32,4 +32,18 @@ fun main() {
     }
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
+    printField(rows, columns)
+}
+
+fun printField(rows: Int, columns: Int) {
+    repeat(columns) { print(" ${it + 1}") }
+    println()
+    repeat(rows) {
+        print("║")
+        repeat(columns) { print(" ║") }
+        println()
+    }
+    print("╚")
+    repeat(columns - 1) { print("═╩") }
+    print("═╝")
 }
