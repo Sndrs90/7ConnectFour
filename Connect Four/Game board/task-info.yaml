@@ -1,0 +1,11 @@
+type: edu
+files:
+  - name: src/connectfour/Main.kt
+    visible: true
+    learner_created: false
+  - name: test/ConnectFourTest.kt
+    visible: false
+    learner_created: false
+feedback_link: https://hyperskill.org/learn/step/14779#comment
+status: Unchecked
+record: -1

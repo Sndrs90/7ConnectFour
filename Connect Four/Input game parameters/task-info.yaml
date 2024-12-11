@@ -1,0 +1,14 @@
+type: edu
+files:
+  - name: src/connectfour/Main.kt
+    visible: true
+    learner_created: false
+  - name: test/ConnectFourTest.kt
+    visible: false
+    learner_created: false
+feedback_link: https://hyperskill.org/learn/step/14778#comment
+status: Solved
+feedback:
+  message: Congratulations!
+  time: "Wed, 11 Dec 2024 07:22:48 UTC"
+record: -1
