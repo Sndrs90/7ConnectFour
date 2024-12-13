@@ -58,10 +58,20 @@ fun main() {
                 }
                 val lastFreeCellIndex = field[columnNum].lastIndexOf(' ')
                 if (lastFreeCellIndex != -1) {
-                    if (isFirstPlayerTurn) field[columnNum][lastFreeCellIndex] = 'o'
-                    else field[columnNum][lastFreeCellIndex] = '*'
-                    isFirstPlayerTurn = !isFirstPlayerTurn
+                    if (isFirstPlayerTurn) {
+                        field[columnNum][lastFreeCellIndex] = 'o'
+                    }
+                    else {
+                        field[columnNum][lastFreeCellIndex] = '*'
+                    }
                     printField(rows, columns, field)
+                    if (checkWinCondition(columnNum, lastFreeCellIndex, field, isFirstPlayerTurn)){
+                        gameState = false
+                        if (isFirstPlayerTurn) println("Player $firstPlayerName won")
+                        else println("Player $secondPlayerName won")
+                    }
+                    isFirstPlayerTurn = !isFirstPlayerTurn
+
                 } else {
                     println("Column ${columnNum + 1} is full")
                 }
@@ -86,4 +96,59 @@ fun printField(rows: Int, columns: Int, field: MutableList<MutableList<Char>>) {
     print("╚")
     repeat(columns - 1) { print("═╩") }
     println("═╝")
+}
+
+fun checkWinCondition(
+    colCell: Int,
+    rowCell: Int,
+    field: MutableList<MutableList<Char>>,
+    isFirstPlayerTurn: Boolean
+): Boolean {
+    val column = field[colCell].joinToString("")
+    val row = List(field.size) { index -> field[index][rowCell] }.joinToString("")
+    val diagonal1 = getDiagonal1(colCell, rowCell, field)
+    val diagonal2 = getDiagonal2(colCell, rowCell, field)
+    val regex = if (isFirstPlayerTurn) {Regex("o{4}")} else {Regex("\\*{4}")}
+    val isColumnOrRow =
+        regex.containsMatchIn(column)
+                || regex.containsMatchIn(row)
+                || regex.containsMatchIn(diagonal1)
+                || regex.containsMatchIn(diagonal2)
+    return isColumnOrRow
+}
+
+fun getDiagonal1(colCell: Int, rowCell: Int, field: MutableList<MutableList<Char>>): String {
+    val diagonal1 = mutableListOf<Char>()
+    val columns = field.lastIndex
+    val rows = field[colCell].lastIndex
+    var c = colCell
+    var r = rowCell
+    while (c > 0 && r >0) {
+        c--
+        r--
+    }
+    while (c <= columns  && r <= rows) {
+        diagonal1.add(field[c][r])
+        c++
+        r++
+    }
+    return diagonal1.joinToString("")
+}
+
+fun getDiagonal2(colCell: Int, rowCell: Int, field: MutableList<MutableList<Char>>): String {
+    val diagonal2 = mutableListOf<Char>()
+    val columns = field.lastIndex
+    val rows = field[colCell].lastIndex
+    var c = colCell
+    var r = rowCell
+    while (c > 0 && r < rows) {
+        c--
+        r++
+    }
+    while (c <= columns  && r >= 0) {
+        diagonal2.add(field[c][r])
+        c++
+        r--
+    }
+    return diagonal2.joinToString("")
 }
