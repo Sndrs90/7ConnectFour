@@ -45,76 +45,224 @@ fun main() {
             //Если пользователь сразу нажал Enter, то используются значения по умолчанию
         } else isInputRight = true
     }
+
+    //Число игр: 1 - режим синглплей, > 1 - режим мультиплей
+    var numberOfGames = 1
+    //Для проверки правильности ввода числа игр
+    isInputRight = false
+    //Пока пользователь не введет корректное число игр, повторять
+    while (!isInputRight) {
+        println("Do you want to play single or multiple games?")
+        println("For a single game, input 1 or press Enter")
+        println("Input a number of games:")
+        //Ввод пользователя
+        val input = readln()
+        //Если ввод не пустой
+        if (input.isNotEmpty()) {
+            //Проверяем, что там положительные числа
+            try {
+                checkNotNull(input.toIntOrNull()){"Invalid input"}
+                check(input.toInt() >= 1){"Invalid input"}
+                //Если введена 1 то это синглплей по умолчанию
+                if (input.toInt() == 1) isInputRight = true
+                //Если ввод >1, то это мультиплей с указанным числом игр
+                else {
+                    numberOfGames = input.toInt()
+                    isInputRight = true
+                }
+            } catch (e: IllegalStateException) {
+                println(e.message)
+            }
+        } else {
+            //Если пользователь нажал Enter, то считать по умолчанию режим синглплей
+            isInputRight = true
+        }
+    }
+    //Первоначальный вывод перед стартом игры
     println("$firstPlayerName VS $secondPlayerName")
     println("$rows X $columns board")
 
-    //Блок переменных состояний, из названий понятно для чего
-    val field : MutableList<MutableList<Char>> = MutableList(columns){ MutableList(rows){' '} }
-    var gameState = true
-    var isFirstPlayerTurn = true
-    val fullColumnIndexList = mutableListOf<Int>()
+    //Режим мультиплей
+    if (numberOfGames > 1) {
+        //Переменные для режима мультиплей
+        var currentGame = 1 //номер текущей игры в сэте
+        var scorePlayer1 = 0    //очки 1-ого игрока
+        var scorePlayer2 = 0    //очки 2-ого игрока
 
-    //Печатаем пустое игровое поле
-    printField(rows, columns, field)
+        println("Total $numberOfGames games")
 
-    //Цикл игры
-    while (gameState) {
-        //Печатаем чей ход
-        if (isFirstPlayerTurn) println("$firstPlayerName's turn:")
-        else println("$secondPlayerName's turn:")
-        //Ввод от игрока номера столбца поля
-        val input = readln()
-        when  {
-            //Если ввод число
-            (input).toIntOrNull() != null -> {
-                //Номер столбца в двумерном листе поля
-                val columnNum = input.toInt() - 1
-                //Проверяем введенный диапазон столбца
-                try {
-                    check(columnNum in 0 until columns)
-                    {"The column number is out of range (1 - $columns)"}
-                } catch (e: IllegalStateException) {
-                    println(e.message)
-                    continue
-                }
-                //Индекс последней свободной ячейки в данном столбце поля
-                val lastFreeCellIndex = field[columnNum].lastIndexOf(' ')
-                //Если свободная ячейка есть
-                if (lastFreeCellIndex != -1) {
-                    //при ходе 1-ого игрока заполняем ее 'o'
-                    if (isFirstPlayerTurn) {
-                        field[columnNum][lastFreeCellIndex] = 'o'
+        //Цикл сэта игр
+        while (currentGame <= numberOfGames) {
+            // Игровое поле
+            val field : MutableList<MutableList<Char>> = MutableList(columns){ MutableList(rows){' '} }
+            //Для цикла игры (раунда)
+            var gameState = true
+            //Поочередно меняется очередь первого хода
+            var isFirstPlayerTurn = currentGame % 2 != 0
+            //Для слежения за заполненностью поля и условия ничьи
+            val fullColumnIndexList = mutableListOf<Int>()
+
+            //Вывод пустого поля перед стартом раунда
+            println("Game #$currentGame")
+            printField(rows, columns, field)
+            //Цикл раунда игры
+            while (gameState) {
+                //Печатаем чей ход
+                if (isFirstPlayerTurn) println("$firstPlayerName's turn:")
+                else println("$secondPlayerName's turn:")
+                //Ввод от игрока номера столбца поля
+                val input = readln()
+                when  {
+                    //Если ввод число
+                    (input).toIntOrNull() != null -> {
+                        //Номер столбца в двумерном листе поля
+                        val columnNum = input.toInt() - 1
+                        //Проверяем введенный диапазон столбца
+                        try {
+                            check(columnNum in 0 until columns)
+                            {"The column number is out of range (1 - $columns)"}
+                        } catch (e: IllegalStateException) {
+                            println(e.message)
+                            continue
+                        }
+                        //Индекс последней свободной ячейки в данном столбце поля
+                        val lastFreeCellIndex = field[columnNum].lastIndexOf(' ')
+                        //Если свободная ячейка есть
+                        if (lastFreeCellIndex != -1) {
+                            //при ходе 1-ого игрока заполняем ее 'o'
+                            if (isFirstPlayerTurn) {
+                                field[columnNum][lastFreeCellIndex] = 'o'
+                            }
+                            //при ходе 2-ого игрока заполняем ее '*'
+                            else {
+                                field[columnNum][lastFreeCellIndex] = '*'
+                            }
+                            //Печатаем обновленное поле
+                            printField(rows, columns, field)
+                            //Проверка условия выигрыша одним из игроков
+                            if (checkWinCondition(columnNum, lastFreeCellIndex, field, isFirstPlayerTurn)){
+                                //Завершение цикла раунда
+                                gameState = false
+                                //Меняем значение текущей игры в сэте
+                                currentGame++
+                                //Вывод выигрыша и зачисление победных очков
+                                if (isFirstPlayerTurn) {
+                                    println("Player $firstPlayerName won")
+                                    scorePlayer1 += 2
+                                }
+                                else {
+                                    println("Player $secondPlayerName won")
+                                    scorePlayer2 += 2
+                                }
+                                //Вывод счета
+                                printScore(firstPlayerName, secondPlayerName, scorePlayer1, scorePlayer2)
+                            }
+                            //Если это последняя ячейка в столбце добавляем его индекс в лист заполненных столбцов
+                            if (lastFreeCellIndex == 0) fullColumnIndexList.add(columnNum)
+                            //Если все ячейки заполнены, то это ничья
+                            if (fullColumnIndexList.size == field.size) {
+                                //Завершение цикла раунда
+                                gameState = false
+                                //Меняем значение текущей игры в сэте
+                                currentGame++
+                                //Зачисление очков ничьи
+                                scorePlayer1++
+                                scorePlayer2++
+                                //Вывод счета
+                                println("It is a draw")
+                                printScore(firstPlayerName, secondPlayerName, scorePlayer1, scorePlayer2)
+                            }
+                            //Переход хода в раунде
+                            isFirstPlayerTurn = !isFirstPlayerTurn
+                        } else {
+                            //Если введен уже заполненный столбец
+                            println("Column ${columnNum + 1} is full")
+                        }
                     }
-                    //при ходе 2-ого игрока заполняем ее '*'
-                    else {
-                        field[columnNum][lastFreeCellIndex] = '*'
-                    }
-                    //Печатаем обновленное поле
-                    printField(rows, columns, field)
-                    //Проверка условия выигрыша одним из игроков
-                    if (checkWinCondition(columnNum, lastFreeCellIndex, field, isFirstPlayerTurn)){
+                    //Если игрок ввел end завершаем игру
+                    input == "end" -> {
+                        //Завершение цикла раунда
                         gameState = false
-                        if (isFirstPlayerTurn) println("Player $firstPlayerName won")
-                        else println("Player $secondPlayerName won")
+                        //Завершение цикла сэта
+                        currentGame = numberOfGames + 1
                     }
-                    //Если это последняя ячейка в столбце добавляем его индекс в лист заполненных столбцов
-                    if (lastFreeCellIndex == 0) fullColumnIndexList.add(columnNum)
-                    //Если все ячейки заполнены, то это ничья
-                    if (fullColumnIndexList.size == field.size) {
-                        gameState = false
-                        println("It is a draw")
+                    //Если ввод не число
+                    else -> println("Incorrect column number")
+                }   //завершение цикла ввода от игрока
+            }   //завершение цикла раунда игры
+        }   //завершение цикла сэта игр
+    } else { //завершение режима мультиплей
+        //Режим синглплей
+
+        //Блок переменных состояний, из названий понятно для чего
+        val field : MutableList<MutableList<Char>> = MutableList(columns){ MutableList(rows){' '} }
+        var gameState = true
+        var isFirstPlayerTurn = true
+        val fullColumnIndexList = mutableListOf<Int>()
+
+        println("Single game")
+        //Печатаем пустое игровое поле
+        printField(rows, columns, field)
+
+        //Цикл игры
+        while (gameState) {
+            //Печатаем чей ход
+            if (isFirstPlayerTurn) println("$firstPlayerName's turn:")
+            else println("$secondPlayerName's turn:")
+            //Ввод от игрока номера столбца поля
+            val input = readln()
+            when  {
+                //Если ввод число
+                (input).toIntOrNull() != null -> {
+                    //Номер столбца в двумерном листе поля
+                    val columnNum = input.toInt() - 1
+                    //Проверяем введенный диапазон столбца
+                    try {
+                        check(columnNum in 0 until columns)
+                        {"The column number is out of range (1 - $columns)"}
+                    } catch (e: IllegalStateException) {
+                        println(e.message)
+                        continue
                     }
-                    //Переход хода
-                    isFirstPlayerTurn = !isFirstPlayerTurn
-                } else {
-                    //Если введен уже заполненный столбец
-                    println("Column ${columnNum + 1} is full")
+                    //Индекс последней свободной ячейки в данном столбце поля
+                    val lastFreeCellIndex = field[columnNum].lastIndexOf(' ')
+                    //Если свободная ячейка есть
+                    if (lastFreeCellIndex != -1) {
+                        //при ходе 1-ого игрока заполняем ее 'o'
+                        if (isFirstPlayerTurn) {
+                            field[columnNum][lastFreeCellIndex] = 'o'
+                        }
+                        //при ходе 2-ого игрока заполняем ее '*'
+                        else {
+                            field[columnNum][lastFreeCellIndex] = '*'
+                        }
+                        //Печатаем обновленное поле
+                        printField(rows, columns, field)
+                        //Проверка условия выигрыша одним из игроков
+                        if (checkWinCondition(columnNum, lastFreeCellIndex, field, isFirstPlayerTurn)){
+                            gameState = false
+                            if (isFirstPlayerTurn) println("Player $firstPlayerName won")
+                            else println("Player $secondPlayerName won")
+                        }
+                        //Если это последняя ячейка в столбце добавляем его индекс в лист заполненных столбцов
+                        if (lastFreeCellIndex == 0) fullColumnIndexList.add(columnNum)
+                        //Если все ячейки заполнены, то это ничья
+                        if (fullColumnIndexList.size == field.size) {
+                            gameState = false
+                            println("It is a draw")
+                        }
+                        //Переход хода
+                        isFirstPlayerTurn = !isFirstPlayerTurn
+                    } else {
+                        //Если введен уже заполненный столбец
+                        println("Column ${columnNum + 1} is full")
+                    }
                 }
+                //Если игрок ввел end завершаем игру
+                input == "end" -> gameState = false
+                //Если ввод не число
+                else -> println("Incorrect column number")
             }
-            //Если игрок ввел end завершаем игру
-            input == "end" -> gameState = false
-            //Если ввод не число
-            else -> println("Incorrect column number")
         }
     }
     println("Game over!")
@@ -201,4 +349,15 @@ fun getDiagonal2(colCell: Int, rowCell: Int, field: MutableList<MutableList<Char
         r--
     }
     return diagonal2.joinToString("")
+}
+
+//Функция печати текущего счета
+fun printScore(
+    firstPlayerName: String,
+    secondPlayerName: String,
+    scorePlayer1: Int,
+    scorePlayer2: Int
+) {
+    println("Score")
+    println("$firstPlayerName: $scorePlayer1 $secondPlayerName: $scorePlayer2")
 }
